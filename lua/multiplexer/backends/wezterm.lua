@@ -62,33 +62,19 @@ function M.get_current_tab()
   end
 
   local current_pane_id = tonumber(vim.env.WEZTERM_PANE)
-  local current_tab_id = nil
-
-  for _, pane in ipairs(panes) do
-    if pane.pane_id == current_pane_id then
-      current_tab_id = pane.tab_id
-      break
-    end
-  end
-
-  if not current_tab_id then
-    return nil
-  end
 
   local windows = {}
   for _, pane in ipairs(panes) do
-    if pane.tab_id == current_tab_id then
-      table.insert(windows, {
-        id = pane.pane_id,
-        title = pane.title,
-        is_focused = pane.is_active,
-        cwd = pane.cwd,
-      })
-    end
+    table.insert(windows, {
+      id = pane.pane_id,
+      title = pane.tab_title,
+      is_focused = pane.pane_id == current_pane_id,
+      cwd = pane.cwd,
+    })
   end
 
   return {
-    id = current_tab_id,
+    id = 0,
     is_focused = true,
     windows = windows,
   }
@@ -103,7 +89,7 @@ function M.focus_tab(identifier)
   local tab_id = identifier.id
   if identifier.title then
     for _, pane in ipairs(panes) do
-      if pane.title == identifier.title then
+      if pane.tab_title == identifier.title then
         tab_id = pane.tab_id
         break
       end
@@ -181,7 +167,7 @@ function M.focus_window(identifier)
   local pane_id = identifier.id
   if identifier.title then
     for _, pane in ipairs(panes) do
-      if pane.title == identifier.title then
+      if pane.tab_title == identifier.title then
         pane_id = pane.pane_id
         break
       end
@@ -204,7 +190,7 @@ function M.close_window(identifier)
   local pane_id = identifier.id
   if identifier.title then
     for _, pane in ipairs(panes) do
-      if pane.title == identifier.title then
+      if pane.tab_title == identifier.title then
         pane_id = pane.pane_id
         break
       end
@@ -227,7 +213,7 @@ function M.close_tab(identifier)
   local tab_id = identifier.id
   if identifier.title then
     for _, pane in ipairs(panes) do
-      if pane.title == identifier.title then
+      if pane.tab_title == identifier.title then
         tab_id = pane.tab_id
         break
       end
