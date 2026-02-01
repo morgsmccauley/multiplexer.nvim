@@ -1,9 +1,9 @@
-local commands = require('kitty.commands')
-local config = require('kitty.config')
-local utils = require('kitty.utils')
-local Project = require('kitty.project')
-local state = require('kitty.state')
-local cache = require('kitty.cache')
+local backends = require('multiplexer.backends')
+local config = require('multiplexer.config')
+local utils = require('multiplexer.utils')
+local Project = require('multiplexer.project')
+local state = require('multiplexer.state')
+local cache = require('multiplexer.cache')
 
 local M = {}
 
@@ -12,7 +12,12 @@ local function list_project_paths()
 end
 
 local function map_paths_to_projects(project_paths)
-  local current_tab = commands.get_current_tab()
+  local backend = backends.get()
+  if not backend then
+    return {}
+  end
+
+  local current_tab = backend.get_current_tab()
   local windows = current_tab and current_tab.windows or {}
 
   local previous_project_name = state.get('previous_project_name')
@@ -92,22 +97,29 @@ function M.close(project)
     return
   end
 
-  commands.close_window({ title = project.name })
+  local backend = backends.get()
+  if backend then
+    backend.close_window({ title = project.name })
+  end
 end
 
 function M.launch(project)
-  commands.launch_window({
+  local backend = backends.get()
+  if not backend then
+    return
+  end
+
+  backend.launch_window({
     title = project.name,
     cwd = project.path,
     cmd = config.options.command,
     env = {
-      KITTY_PROJECTS = '1'
+      MULTIPLEXER_PROJECT = '1'
     }
   })
 end
 
 function M.switch(project)
-  -- Do nothing if already focused on this project
   if project.is_focused then
     return
   end
@@ -116,7 +128,10 @@ function M.switch(project)
   state.set({ current_project_name = project.name })
 
   if project.open then
-    commands.focus_window({ title = project.name })
+    local backend = backends.get()
+    if backend then
+      backend.focus_window({ title = project.name })
+    end
   else
     M.launch(project)
   end
@@ -124,12 +139,13 @@ end
 
 function M.restart(project)
   local old_window_id = project.open and project.id or nil
+  local backend = backends.get()
 
   M.launch(project)
 
-  if old_window_id then
+  if old_window_id and backend then
     vim.defer_fn(function()
-      commands.close_window({ id = old_window_id })
+      backend.close_window({ id = old_window_id })
     end, 100)
   end
 end

@@ -6,13 +6,13 @@ local entry_display = require('telescope.pickers.entry_display')
 local finders = require 'telescope.finders'
 local conf = require('telescope.config').values
 
-local kitty_projects = require('kitty.projects')
+local mux_projects = require('multiplexer.projects')
 
-local list_kitty_projects = function(opts)
+local list_projects = function(opts)
   opts = opts or {}
 
   local make_finder = function()
-    local projects = kitty_projects.list()
+    local projects = mux_projects.list()
 
     local max_width = 0
     for _, project in ipairs(projects) do
@@ -59,7 +59,7 @@ local list_kitty_projects = function(opts)
   end
 
   pickers.new(opts, {
-    prompt_title = 'Kitty Projects',
+    prompt_title = 'Projects',
     finder = make_finder(),
     sorter = conf.generic_sorter(opts),
     attach_mappings = function(prompt_bufnr, map)
@@ -68,14 +68,14 @@ local list_kitty_projects = function(opts)
         local selection = action_state.get_selected_entry()
         local project = selection.value
 
-        kitty_projects.switch(project)
+        mux_projects.switch(project)
       end)
 
       local function close_project()
         local selection = action_state.get_selected_entry()
         local project = selection.value
 
-        kitty_projects.close(project)
+        mux_projects.close(project)
 
         local current_picker = action_state.get_current_picker(prompt_bufnr)
         current_picker:refresh(make_finder())
@@ -88,7 +88,7 @@ local list_kitty_projects = function(opts)
         local project = selection.value
 
         actions.close(prompt_bufnr)
-        kitty_projects.restart(project)
+        mux_projects.restart(project)
       end
 
       map('i', '<C-r>', restart_project)
@@ -100,6 +100,6 @@ end
 
 return telescope.register_extension({
   exports = {
-    projects = list_kitty_projects
+    projects = list_projects
   }
 })

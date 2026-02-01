@@ -1,4 +1,4 @@
-local Config = require('kitty.config')
+local Config = require('multiplexer.config')
 
 local M = {}
 
@@ -15,7 +15,7 @@ function M.setup()
 end
 
 function M.start()
-  local group = vim.api.nvim_create_augroup('kitty', { clear = true })
+  local group = vim.api.nvim_create_augroup('multiplexer', { clear = true })
 
   vim.api.nvim_create_autocmd('VimLeavePre', {
     group = group,
@@ -25,8 +25,6 @@ function M.start()
   vim.api.nvim_create_autocmd({ 'VimEnter' }, {
     group = group,
     callback = function()
-      -- wait for vim setup to complete before loading the session
-      -- without waiting, the buffers is loaded without a filetype
       vim.schedule(M.load)
     end,
   })
@@ -46,12 +44,12 @@ end
 function M.save()
   local session_file = M.get_current()
   local tmp = vim.o.sessionoptions
-  
+
   pcall(function()
     vim.o.sessionoptions = table.concat(Config.options.session_opts, ',')
     vim.cmd('mksession! ' .. vim.fn.fnameescape(session_file))
   end)
-  
+
   vim.o.sessionoptions = tmp
 end
 
@@ -61,11 +59,11 @@ function M.load()
     local ok, err = pcall(function()
       vim.cmd('silent! source ' .. vim.fn.fnameescape(sfile))
     end)
-    
+
     if ok then
       M.session_loaded = true
     else
-      vim.notify('kitty-projects: Failed to load session: ' .. err, vim.log.levels.WARN)
+      vim.notify('multiplexer: Failed to load session: ' .. err, vim.log.levels.WARN)
     end
   end
 end

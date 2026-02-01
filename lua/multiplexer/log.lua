@@ -1,6 +1,6 @@
 local Log = require('plenary.log')
 
 return Log.new({
-  plugin = 'kitty.nvim',
+  plugin = 'multiplexer.nvim',
   use_console = false,
 })

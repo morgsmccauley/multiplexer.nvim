@@ -1,14 +1,18 @@
 local Job = require('plenary.job')
 
-local utils = require('kitty.utils')
-local log = require('kitty.log')
+local utils = require('multiplexer.utils')
+local log = require('multiplexer.log')
 
 local M = {}
 
-function M.send_command(args)
+function M.is_available()
+  return vim.env.KITTY_PID ~= nil
+end
+
+local function send_command(args)
   if not vim.env.KITTY_PID then
     log.error('Not running in Kitty terminal')
-    vim.notify('kitty-projects: Not running in Kitty terminal', vim.log.levels.ERROR)
+    vim.notify('multiplexer: Not running in Kitty terminal', vim.log.levels.ERROR)
     return nil
   end
 
@@ -29,7 +33,7 @@ function M.send_command(args)
 
   if job.code ~= 0 then
     log.error('Kitty command failed: ', args, 'Code: ', job.code)
-    vim.notify('kitty-projects: Command failed - is remote control enabled?', vim.log.levels.ERROR)
+    vim.notify('multiplexer: Command failed - is remote control enabled?', vim.log.levels.ERROR)
     return nil
   end
 
@@ -46,7 +50,7 @@ function M.send_command(args)
 end
 
 function M.list_windows()
-  return M.send_command({ 'ls' })
+  return send_command({ 'ls' })
 end
 
 function M.get_current_tab()
@@ -78,7 +82,7 @@ function M.focus_tab(identifier)
     match = 'id:' .. identifier.id
   end
 
-  return M.send_command({
+  return send_command({
     'focus-tab',
     '--match=' .. match
   })
@@ -105,7 +109,7 @@ function M.launch_tab(args)
     end
   end
 
-  return M.send_command(utils.merge_tables(
+  return send_command(utils.merge_tables(
     {
       'launch',
       '--type=tab'
@@ -137,7 +141,7 @@ function M.launch_window(args)
     end
   end
 
-  return M.send_command(utils.merge_tables(
+  return send_command(utils.merge_tables(
     {
       'launch',
       '--type=window'
@@ -155,7 +159,7 @@ function M.focus_window(identifier)
     match = 'id:' .. identifier.id
   end
 
-  return M.send_command({
+  return send_command({
     'focus-window',
     '--match=' .. match
   })
@@ -172,7 +176,7 @@ function M.close_window(identifier)
     match = 'id:' .. identifier.id
   end
 
-  return M.send_command({
+  return send_command({
     'close-window',
     '--match=' .. match
   })
@@ -187,7 +191,7 @@ function M.close_tab(identifier)
     match = 'id:' .. identifier.id
   end
 
-  return M.send_command({
+  return send_command({
     'close-tab',
     '--match=' .. match
   })

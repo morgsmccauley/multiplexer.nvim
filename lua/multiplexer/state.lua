@@ -3,7 +3,7 @@ local Path = require('plenary.path')
 local M = {}
 
 function M.get(key)
-  local path = Path:new(vim.fn.stdpath("state") .. "/kitty.json")
+  local path = Path:new(vim.fn.stdpath("state") .. "/multiplexer.json")
 
   if not path:exists() then
     path:touch()
@@ -23,7 +23,7 @@ function M.get(key)
 end
 
 function M.set(data)
-  local path = Path:new(vim.fn.stdpath("state") .. "/kitty.json")
+  local path = Path:new(vim.fn.stdpath("state") .. "/multiplexer.json")
 
   if not path:exists() then
     path:touch()
@@ -37,7 +37,7 @@ function M.set(data)
 end
 
 function M.clear()
-  local path = Path:new(vim.fn.stdpath("state") .. "/kitty.json")
+  local path = Path:new(vim.fn.stdpath("state") .. "/multiplexer.json")
 
   if not path:exists() then
     path:touch()

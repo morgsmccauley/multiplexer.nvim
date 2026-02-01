@@ -46,7 +46,6 @@ function M.list_all_sub_directories(path_configs)
   local jobs = {}
   local all_paths = {}
 
-  -- Start all find jobs in parallel
   for i, path_config in ipairs(path_configs) do
     if type(path_config) == 'table' then
       local dir = path_config[1]
@@ -73,7 +72,6 @@ function M.list_all_sub_directories(path_configs)
     end
   end
 
-  -- Collect results from all jobs
   for i, path_config in ipairs(path_configs) do
     if type(path_config) == 'table' then
       if jobs[i] then

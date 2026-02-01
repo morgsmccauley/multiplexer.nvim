@@ -1,13 +1,12 @@
-local kitty_projects = require('kitty.projects')
+local mux_projects = require('multiplexer.projects')
 
 local M = {}
 
 function M.projects(opts)
   opts = opts or {}
 
-  local projects = kitty_projects.list()
+  local projects = mux_projects.list()
 
-  -- Calculate max project name width for alignment
   local max_name_width = 0
   for _, project in ipairs(projects) do
     if #project.name > max_name_width then
@@ -15,7 +14,6 @@ function M.projects(opts)
     end
   end
 
-  -- Format items for snacks picker
   local items = {}
   for _, project in ipairs(projects) do
     local indicator = ''
@@ -39,8 +37,8 @@ function M.projects(opts)
     })
   end
 
-  require('snacks').picker.pick('kitty_projects', vim.tbl_deep_extend('force', {
-    title = 'Kitty Projects',
+  require('snacks').picker.pick('multiplexer_projects', vim.tbl_deep_extend('force', {
+    title = 'Projects',
     items = items,
     layout = { preset = "ivy", preview = false },
     format = function(item)
@@ -56,7 +54,7 @@ function M.projects(opts)
     end,
     confirm = function(picker, item)
       picker:close()
-      kitty_projects.switch(item.project)
+      mux_projects.switch(item.project)
     end,
     win = {
       input = {
@@ -69,11 +67,11 @@ function M.projects(opts)
     actions = {
       close = function(picker, item)
         picker:close()
-        kitty_projects.close(item.project)
+        mux_projects.close(item.project)
       end,
       restart = function(picker, item)
         picker:close()
-        kitty_projects.restart(item.project)
+        mux_projects.restart(item.project)
       end
     },
   }, opts))
