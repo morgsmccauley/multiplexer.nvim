@@ -8,16 +8,29 @@ local conf = require('telescope.config').values
 
 local mux_projects = require('multiplexer.projects')
 
+local function format_metadata(meta)
+  local parts = {}
+  for k, v in pairs(meta) do
+    table.insert(parts, k .. ": " .. tostring(v))
+  end
+  return table.concat(parts, "  ")
+end
+
 local list_projects = function(opts)
   opts = opts or {}
 
   local make_finder = function()
     local projects = mux_projects.list()
 
-    local max_width = 0
+    local max_name_width = 0
+    local max_meta_width = 0
     for _, project in ipairs(projects) do
-      if #project.name > max_width then
-        max_width = #project.name
+      if #project.name > max_name_width then
+        max_name_width = #project.name
+      end
+      local meta_str = format_metadata(project.metadata)
+      if #meta_str > max_meta_width then
+        max_meta_width = #meta_str
       end
     end
 
@@ -25,7 +38,8 @@ local list_projects = function(opts)
       separator = " ",
       items = {
         { width = 2 },
-        { width = max_width },
+        { width = max_name_width },
+        { width = max_meta_width > 0 and max_meta_width or nil },
         { remaining = true },
       },
     }
@@ -43,6 +57,8 @@ local list_projects = function(opts)
             indicator = 'a'
           end
 
+          local meta_str = format_metadata(project.metadata)
+
           return {
             value = project,
             ordinal = project.name,
@@ -50,6 +66,7 @@ local list_projects = function(opts)
               return displayer({
                 indicator,
                 project.name,
+                { meta_str, 'Comment' },
                 { vim.fn.fnamemodify(project.path, ':~'), 'TelescopeResultsComment' }
               })
             end

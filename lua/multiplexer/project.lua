@@ -7,7 +7,8 @@ function Project:new(args)
     path = args.path,
     is_focused = args.is_focused,
     was_focused = args.was_focused,
-    open = args.open
+    open = args.open,
+    metadata = args.metadata or {}
   }
 end
 

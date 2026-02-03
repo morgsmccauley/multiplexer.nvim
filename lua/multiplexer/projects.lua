@@ -4,6 +4,7 @@ local utils = require('multiplexer.utils')
 local Project = require('multiplexer.project')
 local state = require('multiplexer.state')
 local cache = require('multiplexer.cache')
+local metadata = require('multiplexer.metadata')
 
 local M = {}
 
@@ -22,6 +23,8 @@ local function map_paths_to_projects(project_paths)
 
   local previous_project_name = state.get('previous_project_name')
 
+  local all_metadata = metadata.get_all(project_paths)
+
   local projects = vim.tbl_map(
     function(path)
       local basename = vim.fn.fnamemodify(path, ':t')
@@ -36,7 +39,8 @@ local function map_paths_to_projects(project_paths)
         path = path,
         is_focused = (active_window or {}).is_focused or false,
         was_focused = previous_project_name == basename,
-        open = active_window ~= nil
+        open = active_window ~= nil,
+        metadata = all_metadata[path] or {}
       })
 
       return project

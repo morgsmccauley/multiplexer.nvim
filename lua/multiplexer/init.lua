@@ -46,4 +46,16 @@ M.list = function()
   return require('multiplexer.projects').list()
 end
 
+M.set_metadata = function(data)
+  return require('multiplexer.metadata').set(data)
+end
+
+M.get_metadata = function()
+  return require('multiplexer.metadata').get()
+end
+
+M.clear_metadata = function()
+  return require('multiplexer.metadata').clear()
+end
+
 return M
