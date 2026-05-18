@@ -1,49 +1,77 @@
-local Job = require('plenary.job')
-
 local utils = require('multiplexer.utils')
 local log = require('multiplexer.log')
 
 local M = {}
 
+local COMMAND_TIMEOUT_MS = 1000
+
+local function kitty_address()
+  if vim.env.KITTY_LISTEN_ON and vim.env.KITTY_LISTEN_ON ~= '' then
+    return vim.env.KITTY_LISTEN_ON
+  end
+
+  if vim.env.KITTY_PID and vim.env.KITTY_PID ~= '' then
+    return 'unix:/tmp/kitty-' .. vim.env.KITTY_PID
+  end
+end
+
+local function local_socket_path(address)
+  local path = address and address:match('^unix:(.+)$')
+  if path and path:sub(1, 1) ~= '@' then
+    return path
+  end
+end
+
 function M.is_available()
-  return vim.env.KITTY_PID ~= nil
+  return kitty_address() ~= nil
 end
 
 local function send_command(args)
-  if not vim.env.KITTY_PID then
+  local address = kitty_address()
+  if not address then
     log.error('Not running in Kitty terminal')
     vim.notify('multiplexer: Not running in Kitty terminal', vim.log.levels.ERROR)
     return nil
   end
 
-  log.info('Running command: ', args)
-
-  local job = Job:new({
-    command = 'kitty',
-    args = utils.merge_tables(
-      {
-        '@',
-        '--to=unix:/tmp/kitty-' .. vim.env.KITTY_PID,
-      },
-      args
-    ),
-  })
-
-  local raw_results = job:sync()
-
-  if job.code ~= 0 then
-    log.error('Kitty command failed: ', args, 'Code: ', job.code)
-    vim.notify('multiplexer: Command failed - is remote control enabled?', vim.log.levels.ERROR)
+  local socket = local_socket_path(address)
+  if socket and not vim.uv.fs_stat(socket) then
+    log.error('Kitty remote control socket not found: ', socket)
+    vim.notify('multiplexer: Kitty remote control socket not found: ' .. socket, vim.log.levels.WARN)
     return nil
   end
 
-  if #raw_results > 0 then
-    local ok, result = pcall(vim.json.decode, table.concat(raw_results))
-    if not ok then
-      log.error('Failed to parse JSON response: ', table.concat(raw_results))
+  local cmd = utils.merge_tables({ 'kitty', '@', '--to=' .. address }, args)
+
+  log.info('Running command: ', cmd)
+
+  local ok, result = pcall(function()
+    return vim.system(cmd, { text = true, timeout = COMMAND_TIMEOUT_MS }):wait()
+  end)
+
+  if not ok then
+    log.error('Kitty command failed to start: ', result)
+    vim.notify('multiplexer: Failed to run kitty remote control', vim.log.levels.WARN)
+    return nil
+  end
+
+  if result.code ~= 0 then
+    log.error('Kitty command failed: ', cmd, 'Code: ', result.code, 'Stderr: ', result.stderr)
+    if result.code == 124 then
+      vim.notify('multiplexer: Kitty remote control timed out', vim.log.levels.WARN)
+    else
+      vim.notify('multiplexer: Kitty remote control failed', vim.log.levels.WARN)
+    end
+    return nil
+  end
+
+  if result.stdout and result.stdout ~= '' then
+    local decoded_ok, decoded = pcall(vim.json.decode, result.stdout)
+    if not decoded_ok then
+      log.error('Failed to parse JSON response: ', result.stdout)
       return nil
     end
-    return result
+    return decoded
   end
 
   return {}
